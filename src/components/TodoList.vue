@@ -2,11 +2,15 @@
     <div>
         <input type="text" class="todo-input" v-model="newTodo" @keyup.enter="addTodo"
                placeholder="What needs to be done!">
-        <div v-for="todo in todos" :key="todo.id" class="todo-item">
-            <div>
-                {{ todo.title }}
+        <div v-for="(todo, index) in todos" :key="todo.id" class="todo-item">
+            <div class="todo-item-left">
+                <input type="checkbox" v-model="todo.completed">
+                <div v-if="!todo.editing" @dblclick="editTodo(todo)" class="todo-item-label" :class="{ completed : todo.completed }"> {{ todo.title }}
+                </div>
+                <input v-else type="text" class="todo-item-edit" v-model="todo.title" @blur="doneEdit(todo)"
+                       @keyup.enter="doneEdit(todo)" @keyup.esc="cancelEdit(todo)" placeholder="edit todo" v-focus>
             </div>
-            <div class="remove-item">
+            <div class="remove-item" @click="removeTodo(index)">
                 &times;
             </div>
         </div>
@@ -20,23 +24,34 @@
             return {
                 newTodo: '',
                 idForTodo: 4,
+                beforeEditCache: '',
                 todos: [
                     {
                         'id': 1,
                         'title': 'Finish vue todo app tutorial',
-                        'completed': false
+                        'completed': false,
+                        'editing': false,
                     },
                     {
                         'id': 2,
                         'title': 'Implement pdf export on viewData project',
-                        'completed': false
+                        'completed': false,
+                        'editing': false,
                     },
                     {
                         'id': 3,
                         'title': "Send an email to my supervisor reporting today's accomplishments",
-                        'completed': false
+                        'completed': false,
+                        'editing': false,
                     },
                 ]
+            }
+        },
+        directives: {
+            focus: {
+                inserted: function (el) {
+                    el.focus()
+                }
             }
         },
         methods: {
@@ -52,6 +67,23 @@
                 });
                 this.newTodo = ''
                 this.idForTodo++
+            },
+            editTodo(todo) {
+                this.beforeEditCache = todo.title
+                todo.editing = true
+            },
+            doneEdit(todo) {
+                if (todo.title.trim() == '') {
+                    todo.title = this.beforeEditCache
+                }
+                todo.editing = false
+            },
+            cancelEdit(todo) {
+                todo.title = this.beforeEditCache
+                todo.editing = false
+            },
+            removeTodo(index) {
+                this.todos.splice(index, 1)
             }
         }
     }
@@ -83,5 +115,35 @@
 
     .remove-item:hover {
         color: black;
+    }
+
+    .todo-item-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .todo-item-label {
+        padding: 10px;
+        border: 1px solid white;
+        margin-left: 12px;
+    }
+
+    .todo-item-edit {
+        font-size: 24px;
+        color: #2c3e50;
+        margin-left: 12px;
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        font-family: 'Avenir', Helvetica, Arial, SansSerif;
+    }
+
+    .todo-item-edit:focus {
+        outline: none;
+    }
+
+    .todo-item-label.completed {
+        text-decoration: line-through;
+        color: grey;
     }
 </style>
