@@ -2,16 +2,37 @@
     <div>
         <input type="text" class="todo-input" v-model="newTodo" @keyup.enter="addTodo"
                placeholder="What needs to be done!">
-        <div v-for="(todo, index) in todos" :key="todo.id" class="todo-item">
+        <div v-for="(todo, index) in todosFiltered" :key="todo.id" class="todo-item">
             <div class="todo-item-left">
                 <input type="checkbox" v-model="todo.completed">
-                <div v-if="!todo.editing" @dblclick="editTodo(todo)" class="todo-item-label" :class="{ completed : todo.completed }"> {{ todo.title }}
+                <div v-if="!todo.editing" @dblclick="editTodo(todo)" class="todo-item-label"
+                     :class="{ completed : todo.completed }"> {{ todo.title }}
                 </div>
                 <input v-else type="text" class="todo-item-edit" v-model="todo.title" @blur="doneEdit(todo)"
                        @keyup.enter="doneEdit(todo)" @keyup.esc="cancelEdit(todo)" placeholder="edit todo" v-focus>
             </div>
             <div class="remove-item" @click="removeTodo(index)">
                 &times;
+            </div>
+        </div>
+
+        <div class="extra-container">
+            <div>
+                <label><input type="checkbox" :checked="!anyRemaining" @change="checkAllTodos"> Check All</label>
+            </div>
+            <div>{{ remaining }} items left</div>
+        </div>
+
+        <div class="extra-container">
+            <div>
+                <button :class="{ active : filter == 'all' }" @click="filter = 'all'">All</button>
+                <button :class="{ active : filter == 'active' }" @click="filter = 'active'">Active</button>
+                <button :class="{ active : filter == 'completed' }" @click="filter = 'completed'">Completed</button>
+            </div>
+            <div>
+                <transition name="fade">
+                    <button v-if="showClearCompletedButton" @click="clearCompleted">Clear Completed</button>
+                </transition>
             </div>
         </div>
     </div>
@@ -25,26 +46,47 @@
                 newTodo: '',
                 idForTodo: 4,
                 beforeEditCache: '',
+                filter: 'all',
                 todos: [
                     {
                         'id': 1,
                         'title': 'Finish vue todo app tutorial',
-                        'completed': false,
+                        'completed': true,
                         'editing': false,
                     },
                     {
                         'id': 2,
                         'title': 'Implement pdf export on viewData project',
-                        'completed': false,
+                        'completed': true,
                         'editing': false,
                     },
                     {
                         'id': 3,
                         'title': "Send an email to my supervisor reporting today's accomplishments",
-                        'completed': false,
+                        'completed': true,
                         'editing': false,
                     },
                 ]
+            }
+        },
+        computed: {
+            remaining() {
+                return this.todos.filter(x => !x.completed).length
+            },
+            anyRemaining() {
+                return this.remaining != 0
+            },
+            todosFiltered() {
+                if (this.filter == 'all')
+                    return this.todos
+                else if (this.filter == 'active')
+                    return this.todos.filter(x => !x.completed)
+                else if (this.filter == 'completed')
+                    return this.todos.filter(x => x.completed)
+                return this.todos
+            },
+            showClearCompletedButton() {
+                return this.todos.filter(todo => todo.completed).length > 0
             }
         },
         directives: {
@@ -84,6 +126,12 @@
             },
             removeTodo(index) {
                 this.todos.splice(index, 1)
+            },
+            checkAllTodos() {
+                this.todos.forEach(todo => todo.completed = event.target.checked)
+            },
+            clearCompleted() {
+                this.todos = this.todos.filter(x => !x.completed)
             }
         }
     }
@@ -145,5 +193,43 @@
     .todo-item-label.completed {
         text-decoration: line-through;
         color: grey;
+    }
+
+    .extra-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 16px;
+        border-top: 1px solid lightgrey;
+        padding-top: 14px;
+        margin-bottom: 14px;
+    }
+
+    button {
+        font-size: 14px;
+        background-color: white;
+        appearance: none;
+        border: 1px solid #ccc;
+        margin-left: 5px;
+    }
+
+    button:hover {
+        background-color: lightgreen;
+    }
+
+    button:focus {
+        outline: none;
+    }
+
+    .active {
+        background-color: lightgreen;
+    }
+
+    .fade-enter-active, .fade-live-active {
+        transition: opacity 2s;
+    }
+
+    .fade-enter, .fade-leave-to {
+        opacity: 0;
     }
 </style>
